@@ -1,0 +1,68 @@
+<html>
+  <head>
+    <style></style>
+  </head>
+  <body>
+    <form onsubmit="handleSubmit(event)">
+      <label for="images">Image Splitter</label>
+      <input
+        multiple
+        type="file"
+        class="filesInput"
+        name="images"
+        accept="image/*"
+      />
+      <button type="submit">submit</button>
+    </form>
+    <div class="container"></div>
+  </body>
+  <script>
+    //let JSZip = require("jszip");
+    handleSubmit = event => {
+      event.preventDefault();
+
+      const files = document.querySelector(".filesInput").files[0];
+      const container = document.querySelector(".container");
+
+      var canvas = document.createElement("canvas");
+      canvas.width = 400;
+      canvas.height = 400;
+
+      var image = new Image();
+      image.src = window.URL.createObjectURL(files);
+      image.onload = function() {
+        canvas.getContext("2d").drawImage(image, 0, 0);
+      };
+      container.appendChild(canvas);
+
+      // download image
+      let a = document.createElement("a");
+      // a.href = image.src;
+      let formats = ["webp", "jpg", "png"];
+      let sizes = [400, 800];
+      for (let format of formats) {
+        for (let size of sizes) {
+          canvas.width = size;
+          canvas.height = size;
+          canvas.getContext("2d").drawImage(image, 0, 0);
+          canvas.toBlob(
+            function(blob) {
+              a.href = window.URL.createObjectURL(blob);
+              a.download = `got.${format}`;
+              document.body.appendChild(a);
+              a.click();
+            },
+            `image/${format}`,
+            0.75
+          );
+        }
+      }
+      // var zip = new JSZip();
+      // let folder = zip.folder("splitterImages");
+      // folder.file("README", "a folder with photos");
+      // zip.generateAsync({ type: "blob" }).then(function(blob) {
+      //   saveAs(blob, "hello.zip");
+      // });
+    };
+  </script>
+</html>
