@@ -1,10 +1,32 @@
 <html>
   <head>
-    <style></style>
+    <style>
+      * {
+        padding: 1rem 0.5rem;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+      }
+      input[type="text"],
+      input[type="number"],
+      button {
+        width: 30%;
+        margin-bottom: 0.5rem;
+      }
+      button[type="submit"] {
+        background-color: #4299e1;
+        color: white;
+      }
+    </style>
   </head>
   <body>
+    <h1>Image Splitter</h1>
+    <p>
+      This web page is used in order to get several images that are properly
+    </p>
     <form onsubmit="handleSubmit(event)">
-      <label for="images">Image Splitter</label>
+      <label for="images">Select an image(s)</label>
       <input
         multiple
         type="file"
@@ -12,7 +34,39 @@
         name="images"
         accept="image/*"
       />
-      <button type="submit">submit</button>
+      <label for="sizes">Image Widths(px):</label>
+      <input
+        type="text"
+        name="sizes"
+        class="sizes"
+        value="2000,1600,1200,800,600"
+      />
+
+      <label for="quality">Quality(1-100):</label>
+      <input
+        type="number"
+        name="quality"
+        class="quality"
+        min="1"
+        max="100"
+        value="75"
+      />
+
+      <label>Image Formats</label>
+      <div>
+        <input type="checkbox" class="imageFormat" name="webp" checked />
+        <label for="webp">webp</label>
+      </div>
+      <div>
+        <input type="checkbox" class="imageFormat" name="jpg" checked />
+        <label for="webp">jpg</label>
+      </div>
+      <div>
+        <input type="checkbox" class="imageFormat" name="png" checked />
+        <label for="webp">png</label>
+      </div>
+
+      <button type="submit">download</button>
     </form>
     <div class="container"></div>
   </body>
@@ -20,41 +74,52 @@
     //let JSZip = require("jszip");
     handleSubmit = event => {
       event.preventDefault();
+      const files = document.querySelector(".filesInput").files;
+      for (let file of files) {
+        const container = document.querySelector(".container");
 
-      const files = document.querySelector(".filesInput").files[0];
-      const container = document.querySelector(".container");
+        var canvas = document.createElement("canvas");
+        canvas.width = 400;
+        canvas.height = 400;
 
-      var canvas = document.createElement("canvas");
-      canvas.width = 400;
-      canvas.height = 400;
-
-      var image = new Image();
-      image.src = window.URL.createObjectURL(files);
-      image.onload = function() {
-        canvas.getContext("2d").drawImage(image, 0, 0);
-      };
-      container.appendChild(canvas);
-
-      // download image
-      let a = document.createElement("a");
-      // a.href = image.src;
-      let formats = ["webp", "jpg", "png"];
-      let sizes = [400, 800];
-      for (let format of formats) {
-        for (let size of sizes) {
-          canvas.width = size;
-          canvas.height = size;
+        var image = new Image();
+        image.src = window.URL.createObjectURL(file);
+        image.onload = function() {
           canvas.getContext("2d").drawImage(image, 0, 0);
-          canvas.toBlob(
-            function(blob) {
-              a.href = window.URL.createObjectURL(blob);
-              a.download = `got.${format}`;
-              document.body.appendChild(a);
-              a.click();
-            },
-            `image/${format}`,
-            0.75
-          );
+        };
+        container.appendChild(canvas);
+
+        // download image
+        let a = document.createElement("a");
+        let name = file.name.split(".")[0];
+        let formats = [...document.querySelectorAll(".imageFormat")];
+        formats = formats
+          .filter(imageFormat => {
+            return imageFormat.checked;
+            2;
+          })
+          .map(imageFormat => imageFormat.name);
+        const sizes = document
+          .querySelector(".sizes")
+          .value.split(",")
+          .map(width => Number(width));
+        const quality = document.querySelector(".quality").value;
+        for (let format of formats) {
+          for (let size of sizes) {
+            canvas.width = size;
+            canvas.height = size;
+            canvas.getContext("2d").drawImage(image, 0, 0);
+            canvas.toBlob(
+              function(blob) {
+                a.href = window.URL.createObjectURL(blob);
+                a.download = `${name}_${size}w.${format}`;
+                document.body.appendChild(a);
+                a.click();
+              },
+              `image/${format}`,
+              quality
+            );
+          }
         }
       }
       // var zip = new JSZip();
