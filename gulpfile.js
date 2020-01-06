@@ -17,123 +17,31 @@ gulp.task('watch',function() {
   gulp.watch('src/styles/*.scss', gulp.series('sass')); 
 });
 
-gulp.task('resize2000', function() {
-  return  gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
-    .pipe(rename({
-      suffix: "_2000w"
-    }))
-    .pipe(imageResize({
-      width: 2000,
-      upscale: false
-    }))
-    .pipe(gulp.dest('src/images'))
-    .pipe(webp({
-        quality: 70,
+function resizer(cb) {
+  let sizes = [600, 800, 1000, 1200, 1600, 2000];
+  for(let size of sizes) {
+    gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
+      .pipe(imagemin({
+        progressive: true,
+      }))
+      .pipe(rename({
+        suffix: `_${size}w`
+      }))
+      .pipe(imageResize({
+        width: size,
+        upscale: false
+      }))
+      .pipe(gulp.dest('src/images'))
+      .pipe(webp({
+        quality: 75,
         preset: 'photo',
         method: 4
-    }))
-    .pipe(gulp.dest('src/images'))
-})
+      }))
+      .pipe(gulp.dest('src/images'))
+      .on('end', cb);
+  }
+}
 
-gulp.task('resize1600', function() {
-  return  gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
-    .pipe(imagemin({
-      progressive: true,
-    }))
-    .pipe(rename({
-      suffix: "_1600w"
-    }))
-    .pipe(imageResize({
-      width: 1600,
-      upscale: false
-    }))
-    .pipe(gulp.dest('src/images'))
-    .pipe(webp({
-        quality: 70,
-        preset: 'photo',
-        method: 4
-    }))
-    .pipe(gulp.dest('src/images'))
-})
-
-gulp.task('resize1200', function() {
-  return  gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
-    .pipe(imagemin({
-      progressive: true,
-    }))
-    .pipe(rename({
-      suffix: "_1200w"
-    }))
-    .pipe(imageResize({
-      width: 1200,
-      upscale: false
-    }))
-    .pipe(gulp.dest('src/images'))
-    .pipe(webp({
-        quality: 70,
-        preset: 'photo',
-        method: 4
-    }))
-    .pipe(gulp.dest('src/images'))
-})
-gulp.task('resize1000', function() {
-  return  gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
-    .pipe(imagemin({
-      progressive: true,
-    }))
-    .pipe(rename({
-      suffix: "_1000w"
-    }))
-    .pipe(imageResize({
-      width: 1000,
-      upscale: false
-    }))
-    .pipe(gulp.dest('src/images'))
-    .pipe(webp({
-      quality: 70,
-      preset: 'photo',
-      method: 4
-    }))
-    .pipe(gulp.dest('src/images'))
-})
-gulp.task('resize800', function() {
-  return  gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
-    .pipe(imagemin({
-      progressive: true,
-    }))
-    .pipe(rename({
-      suffix: "_800w"
-    }))
-    .pipe(imageResize({
-      width: 800,
-      upscale: false
-    }))
-    .pipe(gulp.dest('src/images'))
-    .pipe(webp({
-      quality: 70,
-      preset: 'photo',
-      method: 4
-    }))
-    .pipe(gulp.dest('src/images'))
-})
-gulp.task('resize600', function() {
-  return  gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
-    .pipe(imagemin({
-      progressive: true,
-    }))
-    .pipe(rename({
-      suffix: "_600w"
-    }))
-    .pipe(imageResize({
-      width: 600,
-      upscale: false
-    }))
-    .pipe(gulp.dest('src/images'))
-    .pipe(webp({
-      quality: 90,
-      preset: 'photo',
-      method: 4
-    }))
-    .pipe(gulp.dest('src/images'))
-})
-gulp.task('images',gulp.parallel('resize2000','resize1600','resize1200','resize1000','resize800','resize600'));
+gulp.task('images', function (cb) {
+  resizer(cb);
+});
