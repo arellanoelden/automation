@@ -1,7 +1,5 @@
 "use strict";
 
-importScripts("/js/external/idb-keyval-iife.min.js");
-
 var version = 8;
 var isOnline = true;
 var isLoggedIn = false;
@@ -214,14 +212,16 @@ function onFetch(evt) {
 	evt.respondWith(router(evt.request));
 }
 
+
+// given request as argument
 async function router(req) {
 	var url = new URL(req.url);
 	var reqURL = url.pathname;
 	var cache = await caches.open(cacheName);
 
-	// request for site's own URL?
+	// request for site's own URL
 	if (url.origin == location.origin) {
-		// are we making an API request?
+		// are we making an API request
 		if (/^\/api\/.+$/.test(reqURL)) {
 			let fetchOptions = {
 				credentials: "same-origin",
@@ -229,151 +229,37 @@ async function router(req) {
 			};
 			let res = await safeRequest(reqURL,req,fetchOptions,/*cacheResponse=*/false,/*checkCacheFirst=*/false,/*checkCacheLast=*/true,/*useRequestDirectly=*/true);
 			if (res) {
+        // cache get requests
 				if (req.method == "GET") {
 					await cache.put(reqURL,res.clone());
-				}
-				// clear offline-backup of successful post?
-				else if (reqURL == "/api/add-post") {
-					await idbKeyval.del("add-post-backup");
 				}
 				return res;
 			}
 
 			return notFoundResponse();
 		}
-		// are we requesting a page?
+		// are we requesting a page
 		else if (req.headers.get("Accept").includes("text/html")) {
-			// login-aware requests?
-			if (/^\/(?:login|logout|add-post)$/.test(reqURL)) {
-				let res;
-
-				if (reqURL == "/login") {
-					if (isOnline) {
-						let fetchOptions = {
-							method: req.method,
-							headers: req.headers,
-							credentials: "same-origin",
-							cache: "no-store",
-							redirect: "manual"
-						};
-						res = await safeRequest(reqURL,req,fetchOptions);
-						if (res) {
-							if (res.type == "opaqueredirect") {
-								return Response.redirect("/add-post",307);
-							}
-							return res;
-						}
-						if (isLoggedIn) {
-							return Response.redirect("/add-post",307);
-						}
-						res = await cache.match("/login");
-						if (res) {
-							return res;
-						}
-						return Response.redirect("/",307);
-					}
-					else if (isLoggedIn) {
-						return Response.redirect("/add-post",307);
-					}
-					else {
-						res = await cache.match("/login");
-						if (res) {
-							return res;
-						}
-						return cache.match("/offline");
-					}
-				}
-				else if (reqURL == "/logout") {
-					if (isOnline) {
-						let fetchOptions = {
-							method: req.method,
-							headers: req.headers,
-							credentials: "same-origin",
-							cache: "no-store",
-							redirect: "manual"
-						};
-						res = await safeRequest(reqURL,req,fetchOptions);
-						if (res) {
-							if (res.type == "opaqueredirect") {
-								return Response.redirect("/",307);
-							}
-							return res;
-						}
-						if (isLoggedIn) {
-							isLoggedIn = false;
-							await sendMessage("force-logout");
-							await delay(100);
-						}
-						return Response.redirect("/",307);
-					}
-					else if (isLoggedIn) {
-						isLoggedIn = false;
-						await sendMessage("force-logout");
-						await delay(100);
-						return Response.redirect("/",307);
-					}
-					else {
-						return Response.redirect("/",307);
-					}
-				}
-				else if (reqURL == "/add-post") {
-					if (isOnline) {
-						let fetchOptions = {
-							method: req.method,
-							headers: req.headers,
-							credentials: "same-origin",
-							cache: "no-store"
-						};
-						res = await safeRequest(reqURL,req,fetchOptions,/*cacheResponse=*/true);
-						if (res) {
-							return res;
-						}
-						res = await cache.match(
-							isLoggedIn ? "/add-post" : "/login"
-						);
-						if (res) {
-							return res;
-						}
-						return Response.redirect("/",307);
-					}
-					else if (isLoggedIn) {
-						res = await cache.match("/add-post");
-						if (res) {
-							return res;
-						}
-						return cache.match("/offline");
-					}
-					else {
-						res = await cache.match("/login");
-						if (res) {
-							return res;
-						}
-						return cache.match("/offline");
-					}
-				}
-			}
 			// otherwise, just use "network-and-cache"
-			else {
-				let fetchOptions = {
-					method: req.method,
-					headers: req.headers,
-					cache: "no-store"
-				};
-				let res = await safeRequest(reqURL,req,fetchOptions,/*cacheResponse=*/false,/*checkCacheFirst=*/false,/*checkCacheLast=*/true);
-				if (res) {
-					if (!res.headers.get("X-Not-Found")) {
-						await cache.put(reqURL,res.clone());
-					}
-					else {
-						await cache.delete(reqURL);
-					}
-					return res;
-				}
+      let fetchOptions = {
+        method: req.method,
+        headers: req.headers,
+        cache: "no-store"
+      };
+      let res = await safeRequest(reqURL,req,fetchOptions,/*cacheResponse=*/false,/*checkCacheFirst=*/false,/*checkCacheLast=*/true);
+      if (res) {
+        if (!res.headers.get("X-Not-Found")) {
+          await cache.put(reqURL,res.clone());
+        }
+        else {
+          await cache.delete(reqURL);
+        }
+        return res;
+      }
 
-				// otherwise, return an offline-friendly page
-				return cache.match("/offline");
-			}
-		}
+      // otherwise, return an offline-friendly page
+      return cache.match("/offline");
+    }
 		// all other files use "cache-first"
 		else {
 			let fetchOptions = {
