@@ -6,21 +6,25 @@ var webp = require('gulp-webp');
 var imageResize = require('gulp-image-resize');
 var rename = require("gulp-rename");
 
+const imageSrcDirectory = 'src/base_images/';
+const imageDestDirectory = 'src/images/';
+const stylesDirectory = 'src/styles/';
+
 // SASS TASKS
 gulp.task('sass', function(){
-  return gulp.src('src/styles/*.scss')
+  return gulp.src(`${stylesDirectory}/*.scss`)
     .pipe(sass()) // Using gulp-sass
-    .pipe(gulp.dest('src/styles/'))
+    .pipe(gulp.dest(`${stylesDirectory}`))
 });
 
 gulp.task('watch',function() {
-  gulp.watch('src/styles/*.scss', gulp.series('sass')); 
+  gulp.watch(`${stylesDirectory}*.scss`, gulp.series('sass')); 
 });
 
 function resizer(cb) {
   let sizes = [600, 800, 1000, 1200, 1600, 2000];
   for(let size of sizes) {
-    gulp.src('src/base_images/**/*.+(jpg|jpeg|webp)')
+    gulp.src(`${imageSrcDirectory}**/*.+(jpg|jpeg|webp)`)
       .pipe(imagemin({
         progressive: true,
       }))
@@ -31,13 +35,13 @@ function resizer(cb) {
         width: size,
         upscale: false
       }))
-      .pipe(gulp.dest('src/images'))
+      .pipe(gulp.dest(`${imageDestDirectory}`))
       .pipe(webp({
         quality: 75,
         preset: 'photo',
         method: 4
       }))
-      .pipe(gulp.dest('src/images'))
+      .pipe(gulp.dest(`${imageDestDirectory}`))
       .on('end', cb);
   }
 }
